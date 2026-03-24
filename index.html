@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>🌱 儿童成长曲线 · 完整标准版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:#f3f7fc; color:#1e2b45; padding:16px; }
+        .container { max-width:1400px; margin:0 auto; }
+        h1 { font-size:1.9rem; font-weight:600; background:linear-gradient(135deg,#2A9D8F 0%,#0077BE 80%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+        h1 i { background:#fff; padding:12px; border-radius:50%; box-shadow:0 10px 20px rgba(0,119,190,0.15); color:#0077BE; font-size:1.5rem; }
+        .card { background:#fff; border-radius:28px; box-shadow:0 15px 30px -12px rgba(0,80,120,0.12); padding:24px; margin-bottom:24px; border:1px solid rgba(42,157,143,0.1); transition:box-shadow 0.2s; }
+        .card:hover { border-color:rgba(42,157,143,0.3); box-shadow:0 25px 40px -16px rgba(0,119,190,0.2); }
+        .child-selector { background:#fff; border-radius:60px; padding:12px 20px; display:flex; flex-wrap:wrap; gap:16px; align-items:center; box-shadow:0 8px 18px -6px rgba(0,100,150,0.08); border:1px solid #dde9f5; margin-bottom:24px; }
+        .child-selector select { flex:2; min-width:200px; padding:14px 20px; border-radius:50px; border:1.5px solid #cbdae9; font-size:1rem; background:#f9fcff; }
+        .flex-row { display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end; }
+        .form-group { flex:1 1 180px; min-width:150px; }
+        .form-group label { display:block; font-size:0.85rem; font-weight:600; color:#3a5670; margin-bottom:8px; }
+        .form-group input, .form-group select { width:100%; padding:16px 18px; border:2px solid #dbe4ee; border-radius:40px; font-size:1rem; background:#fff; transition:0.2s; }
+        .form-group input:focus, .form-group select:focus { outline:none; border-color:#2A9D8F; box-shadow:0 0 0 5px rgba(42,157,143,0.15); }
+        .btn { background:linear-gradient(145deg,#2A9D8F,#1e7b6f); color:#fff; border:none; border-radius:50px; padding:16px 32px; font-size:1.05rem; font-weight:600; cursor:pointer; box-shadow:0 8px 16px -6px rgba(42,157,143,0.4); display:inline-flex; align-items:center; gap:12px; min-height:56px; transition:0.2s; }
+        .btn:hover { background:linear-gradient(145deg,#1e7b6f,#166b5e); transform:translateY(-3px); box-shadow:0 20px 30px -10px #1e7b6f; }
+        .btn-outline { background:transparent; color:#1e3a5f; border:2px solid #c2dfff; box-shadow:none; }
+        .btn-outline:hover { background:#e6f2ff; border-color:#2A9D8F; transform:translateY(-2px); }
+        .btn-sm { padding:12px 24px; min-height:48px; }
+        .table-wrapper { overflow-x:auto; border-radius:24px; border:1px solid #e2ecf9; background:#fafdff; -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; min-width:560px; }
+        th { background:#ecf5fc; color:#144a70; font-weight:600; padding:16px 12px; }
+        td { padding:14px 12px; border-bottom:1px solid #d9e6f2; }
+        .delete-btn, .edit-btn { background:none; border:none; font-size:1.3rem; cursor:pointer; padding:8px 12px; border-radius:30px; transition:0.1s; }
+        .delete-btn { color:#c44536; opacity:0.7; }
+        .delete-btn:hover { opacity:1; background:#ffeae5; transform:scale(1.1); }
+        .edit-btn { color:#2A9D8F; opacity:0.7; }
+        .edit-btn:hover { opacity:1; background:#e0f2ef; transform:scale(1.1); }
+        .chart-container { position:relative; height:300px; width:100%; margin:20px 0; background:#fff; border-radius:24px; padding:12px; border:1px solid #e2effa; }
+        .legend { display:flex; flex-wrap:wrap; gap:16px 28px; margin:20px 0; justify-content:center; background:#f6faff; padding:16px 20px; border-radius:60px; }
+        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.9rem; }
+        .legend-color { width:30px; height:5px; border-radius:8px; }
+        .warning-card { background:#fffaf0; border-radius:20px; padding:14px; border-left:8px solid #f4a261; margin-bottom:10px; }
+        .warning-critical { border-left-color:#e76f51; background:#fff4f0; }
+        .badge { padding:6px 16px; border-radius:40px; font-size:0.85rem; font-weight:600; display:inline-block; }
+        .badge-orange { background:#fff1e0; color:#b85e00; }
+        input[type=range] { -webkit-appearance:none; width:100%; height:10px; background:#dbe4ee; border-radius:20px; margin:15px 0; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:28px; height:28px; background:#2A9D8F; border-radius:50%; cursor:pointer; border:3px solid #fff; }
+        .percentile-panel { background:linear-gradient(120deg,#f1f9ff,#e9f3fa); border-left:8px solid #2A9D8F; }
+        .alert-section { margin-top:24px; border-top:2px dashed #cbdae9; padding-top:20px; }
+        .zoom-hint { font-size:0.85rem; color:#3a5670; margin-top:8px; text-align:center; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000; }
+        .modal-content { background:#fff; border-radius:32px; padding:28px; width:90%; max-width:500px; box-shadow:0 30px 50px rgba(0,0,0,0.2); }
+        .modal-content h3 { margin-bottom:20px; }
+        .modal-content .form-group { margin-bottom:20px; }
+        .modal-buttons { display:flex; gap:12px; justify-content:flex-end; margin-top:20px; }
+        @media (max-width:600px) { body { padding:10px; } .card { padding:18px; } .btn { padding:14px 24px; } h1 { font-size:1.6rem; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1><i class="fas fa-seedling"></i> 儿童成长曲线 · 完整标准版</h1>
+
+    <div class="child-selector">
+        <span><i class="fas fa-child" style="color:#2A9D8F;"></i> 当前孩子：</span>
+        <select id="childSelector"></select>
+        <button class="btn btn-sm btn-outline" id="addChildBtn"><i class="fas fa-plus-circle"></i> 新增孩子</button>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-id-card"></i> 孩子信息</h3>
+        <div class="flex-row">
+            <div class="form-group"><label><i class="fas fa-user"></i> 姓名</label><input type="text" id="childName" placeholder="例如 小豆丁"></div>
+            <div class="form-group"><label><i class="fas fa-venus-mars"></i> 性别</label><select id="childSex"><option value="male">男</option><option value="female">女</option></select></div>
+            <div class="form-group"><label><i class="fas fa-calendar-alt"></i> 出生日期</label><input type="date" id="birthDate"></div>
+            <div><button class="btn" id="updateChildInfoBtn"><i class="fas fa-save"></i> 更新信息</button></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-pen-alt"></i> 添加测量记录</h3>
+        <div class="flex-row">
+            <div class="form-group"><label><i class="fas fa-calendar-check"></i> 测量日期</label><input type="date" id="measureDate" value="2026-03-17"></div>
+            <div class="form-group"><label><i class="fas fa-ruler-vertical"></i> 身高 (cm)</label><input type="number" step="0.1" id="heightInput" placeholder="例如 95.5"></div>
+            <div class="form-group"><label><i class="fas fa-weight-scale"></i> 体重 (kg)</label><input type="number" step="0.1" id="weightInput" placeholder="可选，留空则不记录体重"></div>
+            <div class="form-group"><label><i class="fas fa-comment"></i> 备注</label><input type="text" id="remarkInput" placeholder="生病/睡眠等"></div>
+            <div><button class="btn" id="addRecordBtn"><i class="fas fa-plus"></i> 记录</button></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-exclamation-triangle" style="color:#e76f51;"></i> 异常预警设置与历史</h3>
+        <div style="margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between;"><span>极端百分位阈值: 低于P<span id="extremeLowVal">3</span> 或高于P<span id="extremeHighVal">97</span></span></div>
+            <input type="range" id="extremeThreshold" min="1" max="10" value="3" step="1">
+            <div>百分位下降阈值: 超过 <span id="dropPercentVal">15</span>%</div>
+            <input type="range" id="dropThreshold" min="5" max="30" value="15" step="1">
+            <div>生长速度异常: 低于P<span id="speedLowVal">10</span> 或高于P<span id="speedHighVal">90</span></div>
+            <div style="display:flex; gap:15px;"><input type="range" id="speedThresholdLow" min="1" max="25" value="10" step="1" style="flex:1;"><input type="range" id="speedThresholdHigh" min="75" max="99" value="90" step="1" style="flex:1;"></div>
+            <button class="btn btn-sm btn-outline" id="resetDefaultThresholds" style="margin-top:15px;"><i class="fas fa-undo-alt"></i> 恢复默认值</button>
+        </div>
+        <div class="alert-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><h4 style="margin:0;"><i class="fas fa-bell"></i> 预警历史</h4><span id="alertCount" class="badge badge-orange">0</span></div>
+            <div id="alertHistoryList" style="max-height:200px; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3><i class="fas fa-table"></i> 测量历史</h3>
+            <button class="btn btn-sm btn-outline" id="clearAllBtn"><i class="fas fa-trash-alt"></i> 清空当前孩子记录</button>
+        </div>
+        <div class="table-wrapper"><table id="recordTable"><thead>.<th>日期</th><th>年龄(月)</th><th>身高(cm)</th><th>体重(kg)</th><th>备注</th><th>操作</th> </thead><tbody id="tableBody"></tbody> </table></div>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-chart-line" style="color:#2A9D8F;"></i> 身高-年龄曲线 (WS/T 612-2018)</h3>
+        <div class="chart-container"><canvas id="heightChart"></canvas></div>
+        <div class="zoom-hint"><i class="fas fa-search-plus"></i> 鼠标滚轮缩放，直接拖拽平移</div>
+    </div>
+    <div class="card">
+        <h3><i class="fas fa-chart-line" style="color:#0077BE;"></i> 体重-年龄曲线 (原标准)</h3>
+        <div class="chart-container"><canvas id="weightChart"></canvas></div>
+        <div class="zoom-hint"><i class="fas fa-search-plus"></i> 鼠标滚轮缩放，直接拖拽平移</div>
+    </div>
+
+    <div class="card percentile-panel">
+        <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
+            <span style="font-weight:700; color:#1e3a5f;"><i class="fas fa-chart-simple"></i> 百分位参考线 (身高: WS/T 612-2018):</span>
+            <div class="legend" style="background:transparent; padding:0;">
+                <div class="legend-item"><span class="legend-color" style="background:#e41a1c;"></span> P3 (≈-2SD)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#ff7f00;"></span> P10 (插值)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#ffd700;"></span> P25 (插值)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#4daf4a;"></span> P50 (中位数)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#377eb8;"></span> P75 (插值)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#984ea3;"></span> P90 (插值)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#a65628;"></span> P97 (≈+2SD)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#1e2b45;"></span> 实际数据</div>
+            </div>
+        </div>
+        <p style="margin-top:16px; color:#3d5a73;"><i class="fas fa-info-circle"></i> 横轴以“岁”为单位，支持缩放和拖拽。体重可为空。</p>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-chart-pie"></i> 生长趋势分析</h3>
+        <div id="trendSummary" style="background:#f8fcff; border-radius:20px; padding:16px; margin:16px 0;"></div>
+        <button class="btn btn-sm btn-outline" id="exportReportBtn"><i class="fas fa-file-pdf"></i> 导出报告 (截图)</button>
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3><i class="fas fa-edit"></i> 编辑记录</h3>
+        <div class="form-group"><label>测量日期</label><input type="date" id="editDate"></div>
+        <div class="form-group"><label>身高 (cm)</label><input type="number" step="0.1" id="editHeight"></div>
+        <div class="form-group"><label>体重 (kg) <span style="color:#888;">(可选)</span></label><input type="number" step="0.1" id="editWeight"></div>
+        <div class="form-group"><label>备注</label><input type="text" id="editRemark"></div>
+        <div class="modal-buttons">
+            <button class="btn btn-sm btn-outline" id="cancelEditBtn">取消</button>
+            <button class="btn btn-sm" id="saveEditBtn">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    Chart.register(ChartZoom);
+
+    // ========== 完整标准数据（0-18岁）==========
+    const standardData = {
+        female: {
+            height: [
+                {age:0, p3:45.6, p10:46.8, p25:48.0, p50:49.5, p75:51.0, p90:52.4, p97:53.7},
+                {age:6, p3:63.5, p10:64.8, p25:66.2, p50:67.8, p75:69.4, p90:70.8, p97:72.2},
+                {age:12, p3:71.0, p10:72.5, p25:74.0, p50:75.7, p75:77.5, p90:79.2, p97:80.8},
+                {age:18, p3:76.8, p10:78.4, p25:80.0, p50:81.8, p75:83.7, p90:85.5, p97:87.3},
+                {age:24, p3:81.7, p10:83.4, p25:85.2, p50:87.1, p75:89.1, p90:91.0, p97:92.9},
+                {age:30, p3:85.9, p10:87.7, p25:89.6, p50:91.6, p75:93.7, p90:95.7, p97:97.7},
+                {age:36, p3:89.6, p10:91.5, p25:93.5, p50:95.6, p75:97.8, p90:99.9, p97:102.0},
+                {age:42, p3:93.0, p10:95.0, p25:97.1, p50:99.3, p75:101.6, p90:103.8, p97:106.0},
+                {age:48, p3:96.2, p10:98.3, p25:100.5, p50:102.8, p75:105.2, p90:107.6, p97:109.9},
+                {age:54, p3:99.3, p10:101.5, p25:103.8, p50:106.2, p75:108.7, p90:111.2, p97:113.7},
+                {age:60, p3:102.3, p10:104.6, p25:107.0, p50:109.5, p75:112.1, p90:114.7, p97:117.3},
+                {age:66, p3:105.3, p10:107.7, p25:110.2, p50:112.8, p75:115.5, p90:118.2, p97:121.0},
+                {age:72, p3:108.3, p10:110.8, p25:113.4, p50:116.1, p75:118.9, p90:121.8, p97:124.7},
+                {age:84, p3:112.29, p10:114.26, p25:116.81, p50:124.13, p75:131.45, p90:133.91, p97:135.97},
+                {age:96, p3:116.83, p10:118.99, p25:121.70, p50:129.34, p75:136.98, p90:139.42, p97:141.84},
+                {age:108, p3:121.31, p10:123.71, p25:126.51, p50:134.91, p75:143.31, p90:145.91, p97:148.51},
+                {age:120, p3:126.38, p10:129.08, p25:132.13, p50:141.18, p75:150.23, p90:153.10, p97:155.97},
+                {age:132, p3:132.09, p10:135.91, p25:139.64, p50:147.36, p75:155.08, p90:158.86, p97:162.63},
+                {age:144, p3:138.11, p10:141.69, p25:145.21, p50:152.41, p75:159.61, p90:163.16, p97:166.71},
+                {age:156, p3:143.75, p10:146.83, p25:149.89, p50:156.07, p75:162.25, p90:165.32, p97:168.39},
+                {age:168, p3:146.18, p10:149.08, p25:151.88, p50:157.78, p75:163.68, p90:166.53, p97:169.38},
+                {age:180, p3:147.02, p10:149.88, p25:152.64, p50:158.47, p75:164.30, p90:167.11, p97:169.91},
+                {age:192, p3:147.59, p10:150.43, p25:153.18, p50:158.93, p75:164.68, p90:167.47, p97:170.27},
+                {age:204, p3:147.82, p10:150.66, p25:153.42, p50:159.18, p75:164.94, p90:167.72, p97:170.54},
+                {age:216, p3:148.54, p10:151.42, p25:154.21, p50:160.01, p75:165.81, p90:168.64, p97:171.48}
+            ],
+            weight: [
+                {age:0, p3:2.7, p10:2.9, p25:3.1, p50:3.3, p75:3.6, p90:3.8, p97:4.1},
+                {age:6, p3:6.5, p10:6.9, p25:7.3, p50:7.8, p75:8.3, p90:8.8, p97:9.3},
+                {age:12, p3:8.0, p10:8.5, p25:9.0, p50:9.6, p75:10.2, p90:10.8, p97:11.5},
+                {age:18, p3:9.2, p10:9.8, p25:10.4, p50:11.1, p75:11.9, p90:12.7, p97:13.5},
+                {age:24, p3:10.2, p10:10.9, p25:11.6, p50:12.4, p75:13.2, p90:14.1, p97:15.0},
+                {age:30, p3:11.1, p10:11.9, p25:12.7, p50:13.6, p75:14.6, p90:15.6, p97:16.7},
+                {age:36, p3:12.0, p10:12.9, p25:13.8, p50:14.8, p75:15.9, p90:17.1, p97:18.3},
+                {age:42, p3:12.8, p10:13.8, p25:14.9, p50:16.0, p75:17.2, p90:18.5, p97:19.9},
+                {age:48, p3:13.6, p10:14.7, p25:15.9, p50:17.2, p75:18.6, p90:20.0, p97:21.6},
+                {age:54, p3:14.4, p10:15.6, p25:16.9, p50:18.3, p75:19.9, p90:21.5, p97:23.3},
+                {age:60, p3:15.2, p10:16.5, p25:17.9, p50:19.5, p75:21.2, p90:23.0, p97:25.0},
+                {age:66, p3:16.0, p10:17.4, p25:18.9, p50:20.6, p75:22.5, p90:24.5, p97:26.7},
+                {age:72, p3:16.8, p10:18.3, p25:19.9, p50:21.7, p75:23.8, p90:26.0, p97:28.4},
+                {age:84, p3:18.4, p10:20.1, p25:21.9, p50:24.0, p75:26.3, p90:28.8, p97:31.5},
+                {age:96, p3:20.0, p10:22.0, p25:24.1, p50:26.5, p75:29.0, p90:31.8, p97:34.6},
+                {age:108, p3:21.6, p10:24.0, p25:26.3, p50:29.1, p75:31.8, p90:34.8, p97:37.8},
+                {age:120, p3:23.2, p10:26.0, p25:28.5, p50:31.7, p75:34.6, p90:37.8, p97:41.0},
+                {age:132, p3:25.0, p10:28.0, p25:30.5, p50:34.0, p75:37.5, p90:41.0, p97:44.5},
+                {age:144, p3:27.0, p10:30.0, p25:32.5, p50:36.5, p75:40.5, p90:44.5, p97:48.5},
+                {age:156, p3:29.0, p10:32.0, p25:35.0, p50:39.0, p75:43.5, p90:48.0, p97:52.5},
+                {age:168, p3:31.0, p10:34.0, p25:37.5, p50:41.5, p75:46.0, p90:50.5, p97:55.0},
+                {age:180, p3:33.0, p10:36.0, p25:39.5, p50:44.0, p75:48.5, p90:53.0, p97:57.5},
+                {age:192, p3:34.5, p10:37.5, p25:41.0, p50:45.5, p75:50.0, p90:54.5, p97:59.0},
+                {age:204, p3:35.5, p10:38.5, p25:42.0, p50:46.5, p75:51.0, p90:55.5, p97:60.0},
+                {age:216, p3:36.0, p10:39.0, p25:42.5, p50:47.0, p75:51.5, p90:56.0, p97:60.5}
+            ]
+        },
+        male: {
+            height: [
+                {age:0, p3:46.3, p10:47.5, p25:48.7, p50:50.2, p75:51.7, p90:53.1, p97:54.5},
+                {age:6, p3:65.0, p10:66.3, p25:67.7, p50:69.3, p75:70.9, p90:72.4, p97:73.9},
+                {age:12, p3:72.8, p10:74.3, p25:75.8, p50:77.5, p75:79.3, p90:81.0, p97:82.7},
+                {age:18, p3:78.7, p10:80.3, p25:81.9, p50:83.7, p75:85.6, p90:87.4, p97:89.3},
+                {age:24, p3:83.7, p10:85.4, p25:87.2, p50:89.1, p75:91.1, p90:93.0, p97:95.0},
+                {age:30, p3:88.0, p10:89.8, p25:91.7, p50:93.7, p75:95.8, p90:97.9, p97:100.0},
+                {age:36, p3:91.8, p10:93.7, p25:95.7, p50:97.8, p75:100.0, p90:102.2, p97:104.4},
+                {age:42, p3:95.3, p10:97.3, p25:99.4, p50:101.6, p75:103.9, p90:106.2, p97:108.5},
+                {age:48, p3:98.6, p10:100.7, p25:102.9, p50:105.2, p75:107.6, p90:110.0, p97:112.5},
+                {age:54, p3:101.8, p10:104.0, p25:106.3, p50:108.7, p75:111.2, p90:113.7, p97:116.3},
+                {age:60, p3:104.9, p10:107.2, p25:109.6, p50:112.1, p75:114.7, p90:117.4, p97:120.1},
+                {age:66, p3:108.0, p10:110.4, p25:112.9, p50:115.5, p75:118.2, p90:121.0, p97:123.8},
+                {age:72, p3:111.0, p10:113.5, p25:116.1, p50:118.8, p75:121.6, p90:124.5, p97:127.5},
+                {age:84, p3:113.51, p10:115.50, p25:117.99, p50:125.48, p75:132.97, p90:135.47, p97:137.46},
+                {age:96, p3:118.35, p10:120.68, p25:123.22, p50:130.72, p75:138.22, p90:140.90, p97:143.08},
+                {age:108, p3:122.74, p10:125.34, p25:128.04, p50:135.81, p75:143.58, p90:146.33, p97:148.88},
+                {age:120, p3:126.79, p10:129.79, p25:132.77, p50:140.76, p75:148.75, p90:151.74, p97:154.74},
+                {age:132, p3:130.39, p10:134.30, p25:138.20, p50:146.01, p75:153.82, p90:157.73, p97:161.64},
+                {age:144, p3:134.48, p10:138.90, p25:143.33, p50:152.18, p75:161.03, p90:165.46, p97:169.89},
+                {age:156, p3:143.01, p10:147.30, p25:151.60, p50:160.19, p75:168.78, p90:173.08, p97:177.38},
+                {age:168, p3:150.22, p10:154.07, p25:157.93, p50:165.63, p75:173.33, p90:177.19, p97:181.05},
+                {age:180, p3:155.25, p10:158.69, p25:162.14, p50:169.02, p75:175.90, p90:179.35, p97:182.79},
+                {age:192, p3:157.72, p10:160.93, p25:164.15, p50:170.58, p75:177.01, p90:180.23, p97:183.44},
+                {age:204, p3:158.76, p10:161.91, p25:165.07, p50:171.39, p75:177.71, p90:180.86, p97:184.01},
+                {age:216, p3:158.81, p10:161.96, p25:165.12, p50:171.42, p75:177.73, p90:180.88, p97:184.03}
+            ],
+            weight: [
+                {age:0, p3:2.8, p10:3.0, p25:3.2, p50:3.5, p75:3.8, p90:4.1, p97:4.4},
+                {age:6, p3:7.0, p10:7.5, p25:7.9, p50:8.5, p75:9.1, p90:9.7, p97:10.3},
+                {age:12, p3:8.6, p10:9.2, p25:9.8, p50:10.5, p75:11.3, p90:12.1, p97:12.9},
+                {age:18, p3:10.0, p10:10.7, p25:11.4, p50:12.2, p75:13.1, p90:14.1, p97:15.1},
+                {age:24, p3:11.2, p10:12.0, p25:12.8, p50:13.7, p75:14.7, p90:15.8, p97:17.0},
+                {age:30, p3:12.3, p10:13.2, p25:14.1, p50:15.2, p75:16.4, p90:17.6, p97:19.0},
+                {age:36, p3:13.4, p10:14.4, p25:15.5, p50:16.7, p75:18.0, p90:19.4, p97:20.9},
+                {age:42, p3:14.5, p10:15.6, p25:16.8, p50:18.1, p75:19.6, p90:21.2, p97:22.9},
+                {age:48, p3:15.5, p10:16.7, p25:18.1, p50:19.6, p75:21.2, p90:22.9, p97:24.8},
+                {age:54, p3:16.6, p10:17.9, p25:19.4, p50:21.0, p75:22.8, p90:24.7, p97:26.7},
+                {age:60, p3:17.6, p10:19.1, p25:20.7, p50:22.5, p75:24.4, p90:26.4, p97:28.6},
+                {age:66, p3:18.6, p10:20.2, p25:22.0, p50:23.9, p75:26.0, p90:28.2, p97:30.5},
+                {age:72, p3:19.6, p10:21.3, p25:23.2, p50:25.3, p75:27.5, p90:29.9, p97:32.4},
+                {age:84, p3:21.6, p10:23.5, p25:25.6, p50:28.0, p75:30.5, p90:33.3, p97:36.2},
+                {age:96, p3:23.6, p10:25.7, p25:28.0, p50:30.8, p75:33.5, p90:36.7, p97:40.0},
+                {age:108, p3:25.6, p10:27.9, p25:30.4, p50:33.6, p75:36.5, p90:40.1, p97:43.8},
+                {age:120, p3:27.6, p10:30.1, p25:32.8, p50:36.4, p75:39.5, p90:43.5, p97:47.6},
+                {age:132, p3:29.8, p10:32.5, p25:35.2, p50:39.2, p75:42.8, p90:47.0, p97:51.5},
+                {age:144, p3:32.0, p10:35.0, p25:38.0, p50:42.0, p75:46.0, p90:50.5, p97:55.0},
+                {age:156, p3:34.5, p10:37.5, p25:41.0, p50:45.5, p75:50.0, p90:54.5, p97:59.0},
+                {age:168, p3:37.0, p10:40.0, p25:44.0, p50:48.5, p75:53.5, p90:58.5, p97:63.5},
+                {age:180, p3:39.5, p10:42.5, p25:46.5, p50:51.5, p75:56.5, p90:61.5, p97:66.5},
+                {age:192, p3:42.0, p10:45.0, p25:49.0, p50:54.0, p75:59.0, p90:64.0, p97:69.0},
+                {age:204, p3:44.0, p10:47.0, p25:51.0, p50:56.0, p75:61.0, p90:66.0, p97:71.0},
+                {age:216, p3:45.5, p10:48.5, p25:52.5, p50:57.5, p75:62.5, p90:67.5, p97:72.5}
+            ]
+        }
+    };
+
+    // ========== 全局变量 ==========
+    let children = {};
+    let currentChildId = null;
+    let alertThresholds = { extreme: 3, dropPercent: 15, speedLow: 10, speedHigh: 90 };
+    let heightChart, weightChart;
+    let editingRecordKey = null;
+
+    // ========== 存储 ==========
+    function loadFromStorage() {
+        try {
+            const stored = localStorage.getItem('multiChildGrowth');
+            if (stored) {
+                const data = JSON.parse(stored);
+                children = data.children || {};
+                currentChildId = data.currentChildId || null;
+                alertThresholds = data.alertThresholds || { extreme:3, dropPercent:15, speedLow:10, speedHigh:90 };
+            } else {
+                const defaultId = 'child_' + Date.now();
+                children = {
+                    [defaultId]: {
+                        id: defaultId,
+                        name: '小豆丁',
+                        sex: 'female',
+                        birthDate: '2023-03-01',
+                        records: [],
+                        alertHistory: []
+                    }
+                };
+                currentChildId = defaultId;
+            }
+        } catch (e) { console.warn('读取失败', e); }
+    }
+    function saveToStorage() {
+        localStorage.setItem('multiChildGrowth', JSON.stringify({ children, currentChildId, alertThresholds }));
+    }
+
+    // ========== 工具函数 ==========
+    function monthsSince(birth, measure) {
+        const b = new Date(birth), m = new Date(measure);
+        return (m.getFullYear() - b.getFullYear()) * 12 + (m.getMonth() - b.getMonth()) + (m.getDate() - b.getDate()) / 30.44;
+    }
+
+    function estimatePercentile(ageMonths, value, type, sex) {
+        if (value === null || value === undefined || isNaN(value)) return null;
+        const dataArr = standardData[sex][type];
+        if (!dataArr || dataArr.length === 0) return null;
+        let lower = null, upper = null;
+        for (let i = 0; i < dataArr.length; i++) {
+            if (dataArr[i].age <= ageMonths) lower = dataArr[i];
+            if (dataArr[i].age >= ageMonths) { upper = dataArr[i]; break; }
+        }
+        if (!lower) lower = dataArr[0];
+        if (!upper) upper = dataArr[dataArr.length-1];
+        const percentiles = [3,10,25,50,75,90,97];
+        if (lower.age === upper.age) {
+            const p = lower;
+            for (let i = 0; i < percentiles.length; i++) {
+                if (value <= p['p'+percentiles[i]]) return percentiles[i];
+            }
+            return 100;
+        }
+        const interp = {};
+        percentiles.forEach(perc => {
+            const lowVal = lower['p'+perc], highVal = upper['p'+perc];
+            const ratio = (ageMonths - lower.age) / (upper.age - lower.age);
+            interp[perc] = lowVal + ratio * (highVal - lowVal);
+        });
+        let prev = 3;
+        for (let i = 0; i < percentiles.length; i++) {
+            const perc = percentiles[i];
+            if (value <= interp[perc]) {
+                if (i === 0) return 3;
+                const lowerVal = interp[prev];
+                const upperVal = interp[perc];
+                if (upperVal === lowerVal) return prev;
+                return prev + (perc - prev) * (value - lowerVal) / (upperVal - lowerVal);
+            }
+            prev = perc;
+        }
+        return 97;
+    }
+
+    function checkAlertsForRecord(record, index, child) {
+        const alerts = [];
+        const sex = child.sex;
+        const age = record.age;
+        const h = record.height;
+        const w = record.weight;
+        if (h !== null && !isNaN(h)) {
+            const hPer = estimatePercentile(age, h, 'height', sex);
+            if (hPer !== null && (hPer < alertThresholds.extreme || hPer > (100 - alertThresholds.extreme)))
+                alerts.push({ type:'extreme_height', level:'critical', message:`身高百分位 ${hPer.toFixed(1)}% 异常`, date:record.date });
+        }
+        if (w !== null && !isNaN(w)) {
+            const wPer = estimatePercentile(age, w, 'weight', sex);
+            if (wPer !== null && (wPer < alertThresholds.extreme || wPer > (100 - alertThresholds.extreme)))
+                alerts.push({ type:'extreme_weight', level:'critical', message:`体重百分位 ${wPer.toFixed(1)}% 异常`, date:record.date });
+        }
+        const prevRecords = child.records.slice(0, index).filter(r=>r.date<record.date).sort((a,b)=>a.date.localeCompare(b.date)).slice(-3);
+        if (prevRecords.length >= 2) {
+            const last = prevRecords[prevRecords.length-1];
+            if (h !== null && last.height !== null) {
+                const lastHPer = estimatePercentile(last.age, last.height, 'height', sex);
+                const hPer = estimatePercentile(age, h, 'height', sex);
+                if (lastHPer !== null && hPer !== null && hPer < lastHPer - alertThresholds.dropPercent)
+                    alerts.push({ type:'drop_height', level:'moderate', message:`身高百分位下降超过 ${alertThresholds.dropPercent}%`, date:record.date });
+            }
+            if (w !== null && last.weight !== null) {
+                const lastWPer = estimatePercentile(last.age, last.weight, 'weight', sex);
+                const wPer = estimatePercentile(age, w, 'weight', sex);
+                if (lastWPer !== null && wPer !== null && wPer < lastWPer - alertThresholds.dropPercent)
+                    alerts.push({ type:'drop_weight', level:'moderate', message:`体重百分位下降超过 ${alertThresholds.dropPercent}%`, date:record.date });
+            }
+        }
+        return alerts;
+    }
+
+    function regenerateAlertsForCurrent() {
+        if (!currentChildId) return;
+        const child = children[currentChildId];
+        if (!child) return;
+        child.alertHistory = [];
+        for (let i = 0; i < child.records.length; i++) {
+            const rec = child.records[i];
+            const newAlerts = checkAlertsForRecord(rec, i, child);
+            newAlerts.forEach(a => child.alertHistory.push({ ...a, read: false, timestamp: Date.now() }));
+        }
+        saveToStorage();
+    }
+
+    // ========== 渲染UI ==========
+    function renderChildSelector() {
+        const sel = document.getElementById('childSelector');
+        if (!sel) return;
+        let options = '';
+        for (let id in children) {
+            const c = children[id];
+            options += `<option value="${id}" ${id === currentChildId ? 'selected' : ''}>${c.name || '未命名'}</option>`;
+        }
+        sel.innerHTML = options;
+    }
+
+    function fillChildForm() {
+        if (!currentChildId) return;
+        const child = children[currentChildId];
+        if (!child) return;
+        document.getElementById('childName').value = child.name || '';
+        document.getElementById('childSex').value = child.sex || 'female';
+        document.getElementById('birthDate').value = child.birthDate || '';
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        if (!tbody || !currentChildId) return;
+        const child = children[currentChildId];
+        if (!child || !child.records || child.records.length === 0) {
+            tbody.innerHTML = '.<td colspan="6" style="text-align:center;">暂无记录</td>';
+            return;
+        }
+        const sorted = [...child.records].sort((a,b)=>b.date.localeCompare(a.date));
+        tbody.innerHTML = sorted.map(r => `
+            <tr>
+                <td>${r.date}</td>
+                <td>${r.age.toFixed(1)}</td>
+                <td>${r.height !== null ? r.height : '-'}</td>
+                <td>${r.weight !== null ? r.weight : '-'}</td>
+                <td>${r.remark || ''}</td>
+                <td>
+                    <button class="edit-btn" data-date="${r.date}"><i class="fas fa-edit"></i></button>
+                    <button class="delete-btn" data-date="${r.date}"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            </tr>
+        `).join('');
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => openEditModal(btn.dataset.date));
+        });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const date = btn.dataset.date;
+                if (!currentChildId) return;
+                const child = children[currentChildId];
+                child.records = child.records.filter(r => r.date !== date);
+                child.alertHistory = child.alertHistory.filter(a => a.date !== date);
+                saveToStorage();
+                renderAll();
+            });
+        });
+    }
+
+    function renderAlerts() {
+        const container = document.getElementById('alertHistoryList');
+        const countSpan = document.getElementById('alertCount');
+        if (!container || !currentChildId) return;
+        const child = children[currentChildId];
+        if (!child || !child.alertHistory || child.alertHistory.length === 0) {
+            container.innerHTML = '<p style="color:#888; text-align:center;">暂无预警</p>';
+            countSpan.innerText = '0';
+            return;
+        }
+        const sorted = [...child.alertHistory].sort((a,b)=> (b.timestamp||0) - (a.timestamp||0));
+        countSpan.innerText = sorted.length;
+        container.innerHTML = sorted.map(a => {
+            const levelClass = a.level === 'critical' ? 'warning-critical' : '';
+            return `<div class="warning-card ${levelClass}"><div><strong>${a.date}</strong> ${a.message}</div></div>`;
+        }).join('');
+    }
+
+    function renderTrendSummary() {
+        const div = document.getElementById('trendSummary');
+        if (!div || !currentChildId) return;
+        const child = children[currentChildId];
+        if (!child || !child.records || child.records.length < 2) {
+            div.innerHTML = '<p>至少需要2次记录</p>';
+            return;
+        }
+        const recordsWithHeight = child.records.filter(r => r.height !== null);
+        if (recordsWithHeight.length < 2) {
+            div.innerHTML = '<p>身高数据不足2次，无法计算增长</p>';
+            return;
+        }
+        const sorted = [...recordsWithHeight].sort((a,b)=>a.date.localeCompare(b.date));
+        const first = sorted[0], last = sorted[sorted.length-1];
+        const monthsDiff = last.age - first.age;
+        if (monthsDiff <= 0) { div.innerHTML = '<p>时间间隔不足</p>'; return; }
+        const heightGain = (last.height - first.height) / monthsDiff * 12;
+        const recordsWithWeight = child.records.filter(r => r.weight !== null);
+        let weightGain = null;
+        if (recordsWithWeight.length >= 2) {
+            const sortedW = [...recordsWithWeight].sort((a,b)=>a.date.localeCompare(b.date));
+            const firstW = sortedW[0], lastW = sortedW[sortedW.length-1];
+            const monthsDiffW = lastW.age - firstW.age;
+            if (monthsDiffW > 0) weightGain = (lastW.weight - firstW.weight) / monthsDiffW * 12;
+        }
+        const sex = child.sex;
+        const lastHPer = estimatePercentile(last.age, last.height, 'height', sex)?.toFixed(1) || '?';
+        let lastWPer = '无数据';
+        if (last.weight !== null) {
+            const wPer = estimatePercentile(last.age, last.weight, 'weight', sex);
+            if (wPer !== null) lastWPer = 'P' + wPer.toFixed(1);
+        }
+        div.innerHTML = `
+            <p>📏 身高年增长: <strong>${heightGain.toFixed(1)} cm/年</strong></p>
+            ${weightGain !== null ? `<p>⚖️ 体重年增长: <strong>${weightGain.toFixed(1)} kg/年</strong></p>` : '<p>⚖️ 体重数据不足，无法计算年增长</p>'}
+            <p>📊 最新身高百分位: ${lastHPer}</p>
+            <p>📊 最新体重百分位: ${lastWPer}</p>
+        `;
+    }
+
+    function updateCharts() {
+        if (!heightChart || !weightChart || !currentChildId) return;
+        const child = children[currentChildId];
+        if (!child) return;
+        const sex = child.sex;
+
+        const stdHeight = standardData[sex].height;
+        const stdWeight = standardData[sex].weight;
+        const stdMaxAge = Math.max(...stdHeight.map(d => d.age));
+        let maxAge = stdMaxAge;
+        if (child.records && child.records.length > 0) {
+            const ages = child.records.map(r => r.age);
+            const maxRecordAge = Math.max(...ages);
+            maxAge = Math.max(maxRecordAge + 6, stdMaxAge);
+        }
+
+        const heightDatasets = [
+            { label: 'P3', data: stdHeight.map(p => ({x: p.age, y: p.p3})), borderColor: '#e41a1c', borderWidth: 2, borderDash: [2,2], pointRadius: 0, tension:0.2 },
+            { label: 'P10', data: stdHeight.map(p => ({x: p.age, y: p.p10})), borderColor: '#ff7f00', borderWidth: 2, borderDash: [4,4], pointRadius: 0, tension:0.2 },
+            { label: 'P25', data: stdHeight.map(p => ({x: p.age, y: p.p25})), borderColor: '#ffd700', borderWidth: 2, borderDash: [6,3], pointRadius: 0, tension:0.2 },
+            { label: 'P50', data: stdHeight.map(p => ({x: p.age, y: p.p50})), borderColor: '#4daf4a', borderWidth: 3, pointRadius: 0, tension:0.2 },
+            { label: 'P75', data: stdHeight.map(p => ({x: p.age, y: p.p75})), borderColor: '#377eb8', borderWidth: 2, borderDash: [6,3], pointRadius: 0, tension:0.2 },
+            { label: 'P90', data: stdHeight.map(p => ({x: p.age, y: p.p90})), borderColor: '#984ea3', borderWidth: 2, borderDash: [4,4], pointRadius: 0, tension:0.2 },
+            { label: 'P97', data: stdHeight.map(p => ({x: p.age, y: p.p97})), borderColor: '#a65628', borderWidth: 2, borderDash: [2,2], pointRadius: 0, tension:0.2 }
+        ];
+        const weightDatasets = [
+            { label: 'P3', data: stdWeight.map(p => ({x: p.age, y: p.p3})), borderColor: '#e41a1c', borderWidth: 2, borderDash: [2,2], pointRadius: 0, tension:0.2 },
+            { label: 'P10', data: stdWeight.map(p => ({x: p.age, y: p.p10})), borderColor: '#ff7f00', borderWidth: 2, borderDash: [4,4], pointRadius: 0, tension:0.2 },
+            { label: 'P25', data: stdWeight.map(p => ({x: p.age, y: p.p25})), borderColor: '#ffd700', borderWidth: 2, borderDash: [6,3], pointRadius: 0, tension:0.2 },
+            { label: 'P50', data: stdWeight.map(p => ({x: p.age, y: p.p50})), borderColor: '#4daf4a', borderWidth: 3, pointRadius: 0, tension:0.2 },
+            { label: 'P75', data: stdWeight.map(p => ({x: p.age, y: p.p75})), borderColor: '#377eb8', borderWidth: 2, borderDash: [6,3], pointRadius: 0, tension:0.2 },
+            { label: 'P90', data: stdWeight.map(p => ({x: p.age, y: p.p90})), borderColor: '#984ea3', borderWidth: 2, borderDash: [4,4], pointRadius: 0, tension:0.2 },
+            { label: 'P97', data: stdWeight.map(p => ({x: p.age, y: p.p97})), borderColor: '#a65628', borderWidth: 2, borderDash: [2,2], pointRadius: 0, tension:0.2 }
+        ];
+
+        const records = [...child.records].sort((a,b) => a.age - b.age);
+        const actualHeightData = records.map(r => ({ x: r.age, y: r.height })).filter(d => d.y !== null);
+        const actualWeightData = records.map(r => ({ x: r.age, y: r.weight })).filter(d => d.y !== null);
+
+        heightDatasets.push({ label: child.name + ' 身高', data: actualHeightData, borderColor: '#1e2b45', borderWidth: 3, pointRadius: 6, tension: 0.2 });
+        weightDatasets.push({ label: child.name + ' 体重', data: actualWeightData, borderColor: '#1e2b45', borderWidth: 3, pointRadius: 6, tension: 0.2 });
+
+        heightChart.data.datasets = heightDatasets;
+        weightChart.data.datasets = weightDatasets;
+
+        const zoomOptions = { pan: { enabled: true, mode: 'xy' }, zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'xy' } };
+        heightChart.options = {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { mode: 'index', intersect: false }, zoom: zoomOptions },
+            scales: {
+                x: { type: 'linear', title: { display: true, text: '年龄 (岁)' }, min: 0, max: maxAge, grid: { color: '#e0e8f0' }, ticks: { callback: val => (val/12).toFixed(1) } },
+                y: { title: { display: true, text: '身高 (cm)' }, grid: { color: '#e0e8f0' } }
+            }
+        };
+        weightChart.options = {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { mode: 'index', intersect: false }, zoom: zoomOptions },
+            scales: {
+                x: { type: 'linear', title: { display: true, text: '年龄 (岁)' }, min: 0, max: maxAge, grid: { color: '#e0e8f0' }, ticks: { callback: val => (val/12).toFixed(1) } },
+                y: { title: { display: true, text: '体重 (kg)' }, grid: { color: '#e0e8f0' } }
+            }
+        };
+
+        heightChart.update();
+        weightChart.update();
+    }
+
+    function renderAll() {
+        renderChildSelector();
+        fillChildForm();
+        renderTable();
+        renderAlerts();
+        renderTrendSummary();
+        updateCharts();
+
+        document.getElementById('extremeThreshold').value = alertThresholds.extreme;
+        document.getElementById('dropThreshold').value = alertThresholds.dropPercent;
+        document.getElementById('speedThresholdLow').value = alertThresholds.speedLow;
+        document.getElementById('speedThresholdHigh').value = alertThresholds.speedHigh;
+        document.getElementById('extremeLowVal').innerText = alertThresholds.extreme;
+        document.getElementById('extremeHighVal').innerText = 100 - alertThresholds.extreme;
+        document.getElementById('dropPercentVal').innerText = alertThresholds.dropPercent;
+        document.getElementById('speedLowVal').innerText = alertThresholds.speedLow;
+        document.getElementById('speedHighVal').innerText = alertThresholds.speedHigh;
+    }
+
+    // ========== 编辑模态框 ==========
+    function openEditModal(date) {
+        if (!currentChildId) return;
+        const child = children[currentChildId];
+        const record = child.records.find(r => r.date === date);
+        if (!record) return;
+        editingRecordKey = date;
+        document.getElementById('editDate').value = record.date;
+        document.getElementById('editHeight').value = record.height !== null ? record.height : '';
+        document.getElementById('editWeight').value = record.weight !== null ? record.weight : '';
+        document.getElementById('editRemark').value = record.remark || '';
+        document.getElementById('editModal').style.display = 'flex';
+    }
+    function closeEditModal() { document.getElementById('editModal').style.display = 'none'; editingRecordKey = null; }
+    function saveEdit() {
+        if (!currentChildId || !editingRecordKey) return;
+        const child = children[currentChildId];
+        const index = child.records.findIndex(r => r.date === editingRecordKey);
+        if (index === -1) return;
+
+        const newDate = document.getElementById('editDate').value;
+        if (!newDate) { alert('请选择测量日期'); return; }
+        const newHeight = parseFloat(document.getElementById('editHeight').value);
+        if (isNaN(newHeight)) { alert('身高必须为数字'); return; }
+        const newWeightRaw = document.getElementById('editWeight').value;
+        const newWeight = newWeightRaw === '' ? null : parseFloat(newWeightRaw);
+        if (newWeightRaw !== '' && isNaN(newWeight)) { alert('体重请输入数字或留空'); return; }
+        const newRemark = document.getElementById('editRemark').value;
+        const newAge = monthsSince(child.birthDate, newDate);
+
+        if (newDate !== editingRecordKey && child.records.some((r, i) => i !== index && r.date === newDate)) {
+            alert('该日期已有记录，请勿重复');
+            return;
+        }
+        const updatedRecord = { date: newDate, age: newAge, height: newHeight, weight: newWeight, remark: newRemark };
+        child.records[index] = updatedRecord;
+        saveToStorage();
+        regenerateAlertsForCurrent();
+        renderAll();
+        closeEditModal();
+    }
+
+    // ========== 初始化图表 ==========
+    function initCharts() {
+        const ctxH = document.getElementById('heightChart').getContext('2d');
+        const ctxW = document.getElementById('weightChart').getContext('2d');
+        heightChart = new Chart(ctxH, { type: 'line', data: { datasets: [] }, options: { responsive: true, maintainAspectRatio: false } });
+        weightChart = new Chart(ctxW, { type: 'line', data: { datasets: [] }, options: { responsive: true, maintainAspectRatio: false } });
+    }
+
+    // ========== 事件绑定 ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFromStorage();
+        initCharts();
+        renderAll();
+
+        document.getElementById('childSelector').addEventListener('change', (e) => { currentChildId = e.target.value; saveToStorage(); renderAll(); });
+        document.getElementById('addChildBtn').addEventListener('click', () => {
+            const newId = 'child_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+            children[newId] = { id: newId, name: '新宝宝', sex: 'female', birthDate: '2023-01-01', records: [], alertHistory: [] };
+            currentChildId = newId;
+            saveToStorage();
+            renderAll();
+        });
+        document.getElementById('updateChildInfoBtn').addEventListener('click', () => {
+            if (!currentChildId) return;
+            const child = children[currentChildId];
+            child.name = document.getElementById('childName').value.trim() || '宝宝';
+            child.sex = document.getElementById('childSex').value;
+            child.birthDate = document.getElementById('birthDate').value;
+            saveToStorage();
+            regenerateAlertsForCurrent();
+            renderAll();
+        });
+        document.getElementById('addRecordBtn').addEventListener('click', () => {
+            if (!currentChildId) return;
+            const child = children[currentChildId];
+            const date = document.getElementById('measureDate').value;
+            if (!date) { alert('请选择测量日期'); return; }
+            const height = parseFloat(document.getElementById('heightInput').value);
+            if (isNaN(height)) { alert('身高必须为数字'); return; }
+            const weightRaw = document.getElementById('weightInput').value;
+            const weight = weightRaw === '' ? null : parseFloat(weightRaw);
+            if (weightRaw !== '' && isNaN(weight)) { alert('体重请输入数字或留空'); return; }
+            const remark = document.getElementById('remarkInput').value;
+            const age = monthsSince(child.birthDate, date);
+            if (child.records.some(r => r.date === date)) { alert('该日期已有记录'); return; }
+            const newRecord = { date, age, height, weight, remark };
+            child.records.push(newRecord);
+            const newAlerts = checkAlertsForRecord(newRecord, child.records.length-1, child);
+            newAlerts.forEach(a => child.alertHistory.push({ ...a, read:false, timestamp:Date.now() }));
+            saveToStorage();
+            renderAll();
+            document.getElementById('heightInput').value = '';
+            document.getElementById('weightInput').value = '';
+            document.getElementById('remarkInput').value = '';
+        });
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            if (!currentChildId) return;
+            if (confirm('确定清空当前孩子的所有记录吗？')) {
+                const child = children[currentChildId];
+                child.records = [];
+                child.alertHistory = [];
+                saveToStorage();
+                renderAll();
+            }
+        });
+
+        document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
+        document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+        window.addEventListener('click', (e) => { if (e.target === document.getElementById('editModal')) closeEditModal(); });
+
+        function bindThreshold(sliderId, spanId, key) {
+            document.getElementById(sliderId).addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                if (spanId) document.getElementById(spanId).innerText = val;
+                alertThresholds[key] = val;
+                saveToStorage();
+                regenerateAlertsForCurrent();
+                renderAll();
+            });
+        }
+        bindThreshold('extremeThreshold', 'extremeLowVal', 'extreme');
+        document.getElementById('extremeThreshold').addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.getElementById('extremeHighVal').innerText = 100 - val;
+            alertThresholds.extreme = val;
+            saveToStorage();
+            regenerateAlertsForCurrent();
+            renderAll();
+        });
+        bindThreshold('dropThreshold', 'dropPercentVal', 'dropPercent');
+        document.getElementById('speedThresholdLow').addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.getElementById('speedLowVal').innerText = val;
+            alertThresholds.speedLow = val;
+            saveToStorage();
+            regenerateAlertsForCurrent();
+            renderAll();
+        });
+        document.getElementById('speedThresholdHigh').addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            document.getElementById('speedHighVal').innerText = val;
+            alertThresholds.speedHigh = val;
+            saveToStorage();
+            regenerateAlertsForCurrent();
+            renderAll();
+        });
+
+        document.getElementById('resetDefaultThresholds').addEventListener('click', () => {
+            alertThresholds = { extreme:3, dropPercent:15, speedLow:10, speedHigh:90 };
+            saveToStorage();
+            regenerateAlertsForCurrent();
+            renderAll();
+        });
+
+        document.getElementById('exportReportBtn').addEventListener('click', () => {
+            alert('请使用浏览器截图或打印功能导出报告。');
+        });
+    });
+</script>
+</body>
+</html>
